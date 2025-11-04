@@ -7,23 +7,21 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: pages
+  group: vercel
   cancel-in-progress: false
 
 permissions:
   contents: read
-  pages: read
-  id-token: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: "18.x"
           cache: npm
@@ -44,10 +42,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: "18.x"
           cache: npm
@@ -63,21 +61,22 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload static site artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./out
-
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v21
+        with:
+          vercel-token: ${{ env.VERCEL_TOKEN }}
+          vercel-org-id: ${{ env.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ env.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          prod: true
